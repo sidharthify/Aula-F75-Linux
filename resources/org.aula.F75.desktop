@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=AULA F75
+GenericName=Keyboard Configurator
+Comment=Lighting, key mapping and settings for the AULA F75 keyboard
+Exec=aula-f75
+Icon=org.aula.F75
+Terminal=false
+Categories=Settings;HardwareSettings;Qt;
+Keywords=keyboard;aula;f75;rgb;lighting;macro;
+StartupNotify=true

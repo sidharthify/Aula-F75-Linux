@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>org.aula.F75.svg</file>
+    </qresource>
+</RCC>
