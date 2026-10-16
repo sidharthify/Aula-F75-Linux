@@ -1,41 +1,22 @@
+# LLM Disclaimer
+This was made entirely by DeepSeek v4.1 Flash, I have not written a single line of code (besides the nix flakes, most of this README, and just giving it the right prompts), if you do not want like projects made by LLMs, that is absolutely fine, and you can ignore this. However, that does not mean I will stop maintaining this project, I am simply trying to make life easier for Linux users with this keyboard, and I am not necessarily someone who doesn't
+understand code!
+
 # AULA F75 for Linux
 
 A native Linux/KDE configurator for the **AULA F75** mechanical keyboard.
 
 The F75 only ever shipped a Windows driver (`OemDrv.exe`), which talks to the
 keyboard over a vendor HID collection. This project speaks that protocol
-directly from Linux — **no Wine, no vendor driver, no vendor service**. The UI
-is a normal Qt/KDE application that follows your Breeze theme, so it looks and
-behaves like the rest of your desktop.
+directly from Linux.
 
-```
-┌──────────────┬─────────────────────────────────────────────┐
-│  Device      │  Lighting · Per-Key                          │
-│  Lighting    │   Esc  F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12│
-│  Key Mapping │   ` 1 2 3 4 5 6 7 8 9 0 - =      Back  Del   │
-│  Macros      │   Tab Q W E R T Y U I O P [ ] \   PgUp       │
-│  Settings    │   Caps A S D F G H J K L ; '  Enter          │
-│              │   Shift Z X C V B N M , . /   Shift ↑  End   │
-│              │   Ctrl Win Alt   Space   Fn Ctrl ← ↓ →  PgDn │
-└──────────────┴─────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="assets/screenshot.png" alt="Screenshot 1" width="900" style="border-radius:26px;"/>
+</p>
 
 ## Features
 
-| Area | Status |
-|------|--------|
-| Device detection (wired + 2.4 GHz dongle), model / status | ✅ verified on hardware |
-| **Per-key RGB** editor with live preview and keepalive | ✅ verified on hardware |
-| **Solid colour** | ✅ verified on hardware |
-| On-board effects (streaming, breathing, wave, …) | 🧪 experimental |
-| Key matrix backup / restore / swap | 🧪 experimental |
-| Macros | ⛔ not implemented (format still being reversed) |
-| Profiles (save / load, per-key + settings) | ✅ |
-| udev integration | ✅ |
-
-"verified" means the exact byte sequence has been observed driving the physical
-keyboard. "experimental" means it was reconstructed from the disassembly of the
-Windows driver and has not yet been confirmed on hardware.
+Just about anything you'd find in the original proprietary app.
 
 ## Requirements
 
@@ -80,7 +61,7 @@ services.udev.extraRules = ''
 ## Build from source
 
 ```sh
-nix build            # produces ./result/bin/aula-f75
+nix build
 # or
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
