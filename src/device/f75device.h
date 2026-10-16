@@ -58,6 +58,11 @@ public:
     // Key matrix (remapping) ---------------------------------------------
     // layer: 0 = base, 1..3 = Fn layers.  codes: 4 bytes per key, in LED order.
     bool setMatrix(int layer, const QByteArray& codes);
+
+    // On-board LED profile (effects, brightness, speed) ----------------
+    // Writes the 128-byte block with opcode 0x04.  Build it with
+    // f75::baseLedProfile() and set bytes 10/58/63.
+    bool writeLedProfile(const QByteArray& profile);
     bool resetDevice();
 
     QString lastError() const { return m_lastError; }

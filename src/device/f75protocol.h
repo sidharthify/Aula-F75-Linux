@@ -89,4 +89,12 @@ struct ColorGroup
 // Build the per-LED colour-group payload (type LightDirect).
 QByteArray directPayload(const QList<ColorGroup>& groups);
 
+// The F75's 128-byte on-board "LED profile" block, captured from the Windows
+// driver.  Byte [10] selects the effect, [58] is brightness (0..9) and [63] is
+// speed encoded as (speed << 4) | 0x07 (speed 0..4).  It is read with opcode
+// 0x44 and written with opcode 0x04.
+QByteArray baseLedProfile();
+constexpr int kLedProfileSize = 128;
+constexpr int kOffEffectId     = 0x00;
+
 } // namespace f75

@@ -19,22 +19,15 @@
 
 namespace f75 {
 
-// UI effect index (1..10) -> on-board effect id.  Derived from the driver's
-// Dev/kb/KB.ini "LedOpt" table.  Effect handling is reverse engineered and
-// should be treated as experimental.
-struct EffectEntry { const char* name; uint8_t hw; bool hasSpeed; bool hasDir; bool hasColor; };
-static const EffectEntry kEffects[] = {
-    { "Colourful Streaming", 1,  false, false, true  },
-    { "Steady",              3,  false, false, true  },
-    { "Breathing",           2,  true,  false, true  },
-    { "Colourful Tail",      19, true,  false, false },
-    { "Neon",                15, true,  false, false },
-    { "Colourful Steady",    13, false, false, false },
-    { "Flicker",             20, true,  false, false },
-    { "Stars Twinkle",       16, true,  false, false },
-    { "Wave",                18, true,  true,  false },
-    { "LED Off",             5,  false, false, false },
+// The on-board effects the F75 exposes, in driver order.  The index maps to
+// byte 10 of the LED profile (see MainWindow::sendEffect).
+static const char* const kEffectNames[] = {
+    "Fixed on", "Respire", "Rainbow", "Flash away", "Raindrops",
+    "Ripples shining", "Stars twinkle", "Retro snake", "Neon stream",
+    "Reaction", "Sine wave", "Rotating windmill", "Colorful waterfall",
+    "Blossoming", "Self define", "Off"
 };
+static const int kEffectCount = 16;
 
 LightingPage::LightingPage(MainWindow* mw, QWidget* parent)
     : QWidget(parent)
@@ -153,19 +146,20 @@ LightingPage::LightingPage(MainWindow* mw, QWidget* parent)
         form->setVerticalSpacing(12);
 
         m_effect = new QComboBox(page);
-        for (const auto& e : kEffects)
+        for (int i = 0; i < kEffectCount; ++i)
         {
-            m_effect->addItem(QIcon::fromTheme(QStringLiteral("video-display")), tr(e.name));
+            m_effect->addItem(QIcon::fromTheme(QStringLiteral("video-display")),
+                              tr(kEffectNames[i]));
         }
-        m_effect->setCurrentIndex(qBound(0, m_mw->profile().effectId - 1, 9));
+        m_effect->setCurrentIndex(qBound(0, m_mw->profile().effectId - 1, kEffectCount - 1));
         form->addRow(tr("Effect:"), m_effect);
 
         m_effectColor = new ColorButton(m_mw->profile().effectColor, page);
         form->addRow(tr("Colour:"), m_effectColor);
 
         m_effectBrightness = new QSlider(Qt::Horizontal, page);
-        m_effectBrightness->setRange(0, 4);
-        m_effectBrightness->setValue(m_mw->profile().brightness);
+        m_effectBrightness->setRange(0, 9);
+        m_effectBrightness->setValue(qBound(0, int(m_mw->profile().brightness), 9));
         m_effectBrightness->setTickPosition(QSlider::TicksBelow);
         m_effectBrightness->setTickInterval(1);
         form->addRow(tr("Brightness:"), m_effectBrightness);
@@ -189,17 +183,15 @@ LightingPage::LightingPage(MainWindow* mw, QWidget* parent)
 
         l->addLayout(form);
 
-        auto* apply = new QPushButton(tr("Not available yet"), page);
-        apply->setEnabled(false);
+        auto* apply = new QPushButton(tr("Apply to keyboard"), page);
+        apply->setIcon(QIcon::fromTheme(QStringLiteral("dialog-ok-apply")));
         l->addWidget(apply, 0, Qt::AlignLeft);
         connect(apply, &QPushButton::clicked, this, &LightingPage::applyEffect);
 
         auto* note = new QLabel(tr(
-            "On-board effects are not supported in this build yet.  They are "
-            "stored on the keyboard in a 128-byte profile block that the "
-            "Windows driver writes with opcode 0x04; decoding it has not been "
-            "finished, and guessing the packet can leave the keyboard needing "
-            "a reset.  Use the Per-Key tab, which is fully verified."));
+            "On-board effects are written to the keyboard's LED profile with "
+            "opcode 0x04, exactly as the Windows driver does.  Applying an "
+            "effect leaves direct (Per-Key) mode."));
         note->setWordWrap(true);
         note->setEnabled(false);
         l->addWidget(note);

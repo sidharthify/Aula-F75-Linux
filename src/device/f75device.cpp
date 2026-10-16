@@ -298,6 +298,16 @@ bool Device::setMatrix(int layer, const QByteArray& codes)
     return writeReports(buildChunks(OpSetMatrix, static_cast<uint8_t>(layer), codes));
 }
 
+bool Device::writeLedProfile(const QByteArray& profile)
+{
+    if (profile.size() != kLedProfileSize)
+    {
+        m_lastError = QStringLiteral("LED profile must be %1 bytes").arg(kLedProfileSize);
+        return false;
+    }
+    return writeReports(buildChunks(OpSetLed, 0, profile));
+}
+
 bool Device::resetDevice()
 {
     uint8_t p[kReportSize];

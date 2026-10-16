@@ -94,4 +94,16 @@ QByteArray directPayload(const QList<ColorGroup>& groups)
     return payload;
 }
 
+QByteArray baseLedProfile()
+{
+    // Captured byte-for-byte from OemDrv.exe driving the F75 (effect = Fixed_on,
+    // brightness 5, speed 4).  Only bytes 10, 58 and 63 are varied when an
+    // effect/brightness/speed is selected.
+    return QByteArray::fromHex(
+        "0003030100000404070001200100010000000100020100ff0a00010001000301"
+        "000000000000000000000000000000000000000000000000ffff054009470947"
+        "0947094709470947094709470947094709470947094709470947093709370937"
+        "0937074707470744074407440744074407440744040904040404040404045aa5");
+}
+
 } // namespace f75

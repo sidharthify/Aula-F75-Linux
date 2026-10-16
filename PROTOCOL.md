@@ -85,6 +85,31 @@ The low nibble of byte 4 selects the flavour:
 13 05 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 19
 ```
 
+## On-board effects — opcodes `0x44` (read) / `0x04` (write)
+
+Effects, brightness and speed live in a 128-byte **LED profile** block:
+
+- `0x44` reads it (10 chunks, ends with the `A5 5A` magic),
+- `0x04` writes it (10 chunks).
+
+Only three bytes vary (verified by capturing the Windows driver with usbmon
+while selecting each effect):
+
+| Byte | Meaning | Values |
+|-----:|---------|--------|
+| 10 | effect id | see table |
+| 58 | brightness | 0..9 |
+| 63 | speed | `(speed << 4) \| 0x07`, speed 0..4 |
+
+Effect ids (driver order): Fixed on `0x01`, Respire `0x02`, Rainbow `0x03`,
+Flash away `0x04`, Raindrops `0x05`, Ripples shining `0x07`, Stars twinkle
+`0x08`, Retro snake `0x0A`, Neon stream `0x0B`, Reaction `0x0C`, Sine wave
+`0x0D`, Rotating windmill `0x0F`, Colorful waterfall `0x10`, Blossoming `0x11`,
+Self define `0x15`, Off `0x00`.
+
+The base block is embedded in `src/device/f75protocol.cpp` (`baseLedProfile()`).
+Writing the profile leaves direct (`0x88`) mode.
+
 ## LED map
 
 The F75 numbers its LEDs **column-major, six rows per column**, so a key's LED
@@ -113,25 +138,14 @@ effect. The application therefore re-sends the current frame every 50 ms.
 
 ## Unresolved
 
-- On-board effect payload — the driver stores lighting/effect configuration in a
-  128-byte "LED profile" block read with opcode `0x44` and written with opcode
-  `0x04` (the driver verifies an `A5 5A` magic near the end).  The block layout
-  (which bytes select the effect, brightness, speed and direction) has not been
-  decoded yet, so the application's Effects tab is not functional.  Use
-  `tools/f75cfg` to read/diff/write the block and help isolate the fields:
-
-      gcc -O2 -o f75cfg tools/f75cfg.c
-      ./f75cfg read  /dev/hidraw4
-      ./f75cfg diff  /dev/hidraw4     # change the on-board effect, then Enter
-      ./f75cfg write <256 hex chars>  # write a profile back
-
 - Macro record format (`0x03`) — the driver writes 0x200-byte records with a
   name and event list; not yet decoded.
 - Key matrix index ↔ LED index mapping — assumed 1:1 in `RemapPage` and marked
-  experimental.
+  read-only.
 
 ## Tooling
 
 `tools/f75cfg.c` speaks opcodes `0x05`, `0x44` and `0x04` directly and is the
-intended way to finish the effect decode.
+intended way to inspect the LED profile.
+
 

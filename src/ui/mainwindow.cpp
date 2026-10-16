@@ -390,11 +390,42 @@ void MainWindow::sendSolid(const QColor& c)
 
 void MainWindow::sendEffect()
 {
-    // On-board effects are written through the keyboard's 128-byte profile
-    // block (opcode 0x04).  That layout is not decoded yet, so nothing is sent
-    // here rather than risk leaving the keyboard in a bad state.
-    statusBar()->showMessage(
-        tr("On-board effects are not supported yet — use the Per-Key tab."), 5000);
+    if (!m_device.isOpen())
+    {
+        statusBar()->showMessage(tr("Not connected"), 2000);
+        return;
+    }
+
+    // Effects are an on-board profile write (opcode 0x04).  The captured base
+    // block differs between effects only in byte 10, brightness in byte 58 and
+    // speed in byte 63.
+    static const uint8_t hwEffect[16] = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x07, 0x08, 0x0A,
+        0x0B, 0x0C, 0x0D, 0x0F, 0x10, 0x11, 0x15, 0x00
+    };
+    const int idx = qBound(0, m_profile.effectId - 1, 15);
+    const uint8_t brightness = static_cast<uint8_t>(qBound(0, int(m_profile.brightness), 9));
+    const uint8_t speed = static_cast<uint8_t>(qBound(0, int(m_profile.speed), 4));
+
+    QByteArray prof = baseLedProfile();
+    if (prof.size() == kLedProfileSize)
+    {
+        prof[10] = static_cast<char>(hwEffect[idx]);
+        prof[58] = static_cast<char>(brightness);
+        prof[63] = static_cast<char>((speed << 4) | 0x07);
+    }
+
+    // Stop the direct-mode keepalive so the on-board effect is visible.
+    m_lastFrameValid = false;
+
+    if (m_device.writeLedProfile(prof))
+    {
+        statusBar()->showMessage(tr("Effect applied."), 4000);
+    }
+    else
+    {
+        statusBar()->showMessage(tr("Effect command failed: %1").arg(m_device.lastError()), 5000);
+    }
 }
 
 void MainWindow::setKeepaliveActive(bool on)
