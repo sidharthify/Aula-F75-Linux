@@ -126,6 +126,7 @@ LightingPage::LightingPage(MainWindow* mw, QWidget* parent)
         });
         connect(m_brightness, &QSlider::valueChanged, this, [this](int v) {
             m_mw->profile().keyBrightness = v;
+            m_view->setDisplayBrightness(v);
             if (m_live->isChecked())
             {
                 m_mw->sendPerKey();
@@ -134,6 +135,7 @@ LightingPage::LightingPage(MainWindow* mw, QWidget* parent)
 
         m_view->setCurrentColor(m_paintColor->color());
         m_view->setColors(m_mw->profile().colors);
+        m_view->setDisplayBrightness(m_brightness->value());
 
         m_tabs->addTab(page, QIcon::fromTheme(QStringLiteral("preferences-desktop-keyboard")),
                        tr("Per-Key"));
@@ -187,14 +189,17 @@ LightingPage::LightingPage(MainWindow* mw, QWidget* parent)
 
         l->addLayout(form);
 
-        auto* apply = new QPushButton(tr("Apply to keyboard"), page);
-        apply->setIcon(QIcon::fromTheme(QStringLiteral("dialog-ok-apply")));
+        auto* apply = new QPushButton(tr("Not available yet"), page);
+        apply->setEnabled(false);
         l->addWidget(apply, 0, Qt::AlignLeft);
         connect(apply, &QPushButton::clicked, this, &LightingPage::applyEffect);
 
         auto* note = new QLabel(tr(
-            "On-board effects are reverse engineered from the Windows driver and "
-            "are experimental.  Use the Per-Key tab for fully verified control."));
+            "On-board effects are not supported in this build yet.  They are "
+            "stored on the keyboard in a 128-byte profile block that the "
+            "Windows driver writes with opcode 0x04; decoding it has not been "
+            "finished, and guessing the packet can leave the keyboard needing "
+            "a reset.  Use the Per-Key tab, which is fully verified."));
         note->setWordWrap(true);
         note->setEnabled(false);
         l->addWidget(note);

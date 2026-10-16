@@ -19,6 +19,7 @@
 #include <QMessageBox>
 #include <QStackedWidget>
 #include <QStatusBar>
+#include <QSystemTrayIcon>
 #include <QToolBar>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -59,7 +60,10 @@ void MainWindow::buildUi()
     fileMenu->addSeparator();
     auto* quitAction = fileMenu->addAction(QIcon::fromTheme(QStringLiteral("application-exit")),
                                            tr("&Quit"));
-    connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
+    connect(quitAction, &QAction::triggered, this, [this] {
+        m_forceQuit = true;
+        qApp->quit();
+    });
 
     auto refreshProfiles = [loadMenu] {
         loadMenu->clear();
@@ -188,7 +192,45 @@ void MainWindow::buildUi()
     connect(m_nav, &QListWidget::currentRowChanged, this, &MainWindow::onNavChanged);
     m_nav->setCurrentRow(1);
 
+    // System tray: closing the window keeps the app (and the direct-mode
+    // keepalive) running so the keyboard stays exactly as configured instead
+    // of reverting to its on-board effect.  Use File > Quit to really exit.
+    if (QSystemTrayIcon::isSystemTrayAvailable())
+    {
+        m_tray = new QSystemTrayIcon(QIcon::fromTheme(QStringLiteral("input-keyboard")), this);
+        m_tray->setToolTip(tr("AULA F75"));
+        auto* menu = new QMenu(this);
+        menu->addAction(QIcon::fromTheme(QStringLiteral("view-restore")), tr("Show window"),
+                        this, [this] { show(); raise(); activateWindow(); });
+        menu->addAction(QIcon::fromTheme(QStringLiteral("application-exit")), tr("Quit"),
+                        this, [this] { m_forceQuit = true; qApp->quit(); });
+        m_tray->setContextMenu(menu);
+        connect(m_tray, &QSystemTrayIcon::activated, this,
+                [this](QSystemTrayIcon::ActivationReason r) {
+                    if (r == QSystemTrayIcon::Trigger || r == QSystemTrayIcon::DoubleClick)
+                    {
+                        show(); raise(); activateWindow();
+                    }
+                });
+        m_tray->show();
+    }
+
     statusBar()->showMessage(tr("Ready"));
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    if (m_tray && !m_forceQuit)
+    {
+        hide();
+        m_tray->showMessage(tr("AULA F75"),
+                            tr("Still running in the tray so the keyboard stays as "
+                               "configured.  Use File > Quit to exit."),
+                            QSystemTrayIcon::Information, 3000);
+        event->ignore();
+        return;
+    }
+    event->accept();
 }
 
 void MainWindow::onNavChanged(int row)
@@ -348,24 +390,11 @@ void MainWindow::sendSolid(const QColor& c)
 
 void MainWindow::sendEffect()
 {
-    if (!m_device.isOpen())
-    {
-        statusBar()->showMessage(tr("Not connected"), 2000);
-        return;
-    }
-    m_lastFrameValid = false; // effects are on-board; no keepalive needed
-    static const uint8_t hwIds[] = { 1, 3, 2, 19, 15, 13, 20, 16, 18, 5 };
-    const int idx = qBound(0, m_profile.effectId - 1, 9);
-    const QColor c = m_profile.effectColor;
-    if (m_device.setEffect(hwIds[idx], m_profile.brightness, m_profile.speed,
-                           m_profile.direction, m_profile.colorful, c.red(), c.green(), c.blue()))
-    {
-        statusBar()->showMessage(tr("Effect applied.  Use the Per-Key tab for direct control."), 4000);
-    }
-    else
-    {
-        statusBar()->showMessage(tr("Effect command failed."), 4000);
-    }
+    // On-board effects are written through the keyboard's 128-byte profile
+    // block (opcode 0x04).  That layout is not decoded yet, so nothing is sent
+    // here rather than risk leaving the keyboard in a bad state.
+    statusBar()->showMessage(
+        tr("On-board effects are not supported yet — use the Per-Key tab."), 5000);
 }
 
 void MainWindow::setKeepaliveActive(bool on)

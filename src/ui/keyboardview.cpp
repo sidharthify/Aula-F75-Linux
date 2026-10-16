@@ -59,6 +59,12 @@ void KeyboardView::setShowLabels(bool on)
     update();
 }
 
+void KeyboardView::setDisplayBrightness(int percent)
+{
+    m_displayBrightness = qBound(0, percent, 100);
+    update();
+}
+
 static QRect computeLayout(const QRect& bounds, const QSize& widget, double& scaleOut)
 {
     const double sx = double(widget.width() - 24) / bounds.width();
@@ -105,6 +111,12 @@ void KeyboardView::paintEvent(QPaintEvent*)
         const int led = it.key();
         const QRect r = it.value();
         QColor c = (led < m_colors.size()) ? m_colors[led] : QColor(0, 0, 0, 0);
+
+        if (c.alpha() != 0 && m_displayBrightness < 100)
+        {
+            const double f = m_displayBrightness / 100.0;
+            c = QColor(int(c.red() * f), int(c.green() * f), int(c.blue() * f));
+        }
 
         QColor fill = c.alpha() == 0 ? QColor(48, 48, 48) : c;
         p.setBrush(fill);

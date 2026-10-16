@@ -153,17 +153,30 @@ int main(int argc, char **argv)
         if (argc >= 3) dev = argv[2];
         int fd = open_dev(dev); if (fd < 0) return 1;
         if (!read_profile(fd, prof)) { fprintf(stderr, "first read failed\n"); return 1; }
-        printf("Read the profile. Now CHANGE THE ON-BOARD EFFECT on the keyboard\n");
-        printf("(its Fn effect shortcut, or the Windows driver), then press Enter...\n");
-        fflush(stdout);
-        char line[64];
-        if (!fgets(line, sizeof line, stdin)) return 1;
-        if (!read_profile(fd, prof2)) { fprintf(stderr, "second read failed\n"); return 1; }
-        printf("Changed bytes (offset: before -> after):\n");
-        int changed = 0;
-        for (int i = 0; i < PROFILE; i++)
-            if (prof[i] != prof2[i]) { printf("  [%3d] %02x -> %02x\n", i, prof[i], prof2[i]); changed++; }
-        if (!changed) printf("  (none — the board may be in direct mode, or the effect is not in this block)\n");
+        printf("Baseline profile read.\n");
+        for (int round = 1; round <= 6; round++)
+        {
+            printf("\n[round %d] Change ONE thing on the keyboard "
+                   "(effect, brightness, speed, colour), then press Enter "
+                   "(empty line + Enter to finish):\n", round);
+            fflush(stdout);
+            char line[64];
+            if (!fgets(line, sizeof line, stdin)) break;
+            if (line[0] == '\n') break;
+            if (!read_profile(fd, prof2)) { fprintf(stderr, "read failed\n"); continue; }
+            int changed = 0;
+            for (int i = 0; i < PROFILE; i++)
+                if (prof[i] != prof2[i]) { printf("  [%3d] %02x -> %02x\n", i, prof[i], prof2[i]); changed++; }
+            if (!changed) printf("  (no change in this block)\n");
+            memcpy(prof, prof2, PROFILE);
+        }
+    }
+    else if (!strcmp(cmd, "dump"))
+    {
+        if (argc >= 3) dev = argv[2];
+        int fd = open_dev(dev); if (fd < 0) return 1;
+        if (!read_profile(fd, prof)) { fprintf(stderr, "no reply (keyboard asleep?)\n"); return 1; }
+        for (int i = 0; i < PROFILE; i++) { printf("[%3d] %02x\n", i, prof[i]); }
     }
     else if (!strcmp(cmd, "write"))
     {

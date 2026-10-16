@@ -9,6 +9,7 @@
 class QListWidget;
 class QStackedWidget;
 class QLabel;
+class QSystemTrayIcon;
 
 namespace f75 {
 class DevicePage;
@@ -44,6 +45,9 @@ public:
 signals:
     void connectionChanged();
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
 private slots:
     void onNavChanged(int row);
     void tryConnect();
@@ -70,6 +74,8 @@ private:
     QListWidget*    m_nav = nullptr;
     QStackedWidget* m_stack = nullptr;
     QLabel*         m_statusLabel = nullptr;
+    QSystemTrayIcon* m_tray = nullptr;
+    bool            m_forceQuit = false;
 
     DevicePage*     m_pageDevice = nullptr;
     LightingPage*   m_pageLighting = nullptr;

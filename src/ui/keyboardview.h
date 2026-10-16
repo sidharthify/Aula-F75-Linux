@@ -33,6 +33,11 @@ public:
     void setLabels(const QHash<int, QString>& labels); // led -> overlay text
     void setShowLabels(bool on);
 
+    // Preview brightness (percent) applied to drawn colours so the editor
+    // matches what is sent to the keyboard.
+    void setDisplayBrightness(int percent);
+    int  displayBrightness() const { return m_displayBrightness; }
+
 signals:
     void keyClicked(int led);
     void keyPainted(int led, const QColor& c);
@@ -55,6 +60,7 @@ private:
     QHash<int, QString> m_labels;
     bool m_showLabels = false;
     bool m_dragging = false;
+    int  m_displayBrightness = 100;
 };
 
 } // namespace f75

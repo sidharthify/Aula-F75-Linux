@@ -29,9 +29,10 @@ RemapPage::RemapPage(MainWindow* mw, QWidget* parent)
     root->setSpacing(12);
 
     auto* note = new QLabel(tr(
-        "<b>Experimental.</b> The key map is stored on the keyboard as a matrix "
-        "of 4-byte hardware codes.  Read it first, then swap keys and write it "
-        "back.  A backup of the original matrix is kept automatically."));
+        "<b>Read-only in this build.</b>  The key map is stored on the keyboard "
+        "as a matrix of 4-byte hardware codes.  Reading and backing it up is "
+        "safe; writing it is disabled because the block layout has not been "
+        "verified on hardware and a wrong write can require a factory reset."));
     note->setWordWrap(true);
     root->addWidget(note);
 
@@ -158,24 +159,13 @@ void RemapPage::readMatrix()
 
 void RemapPage::writeMatrix()
 {
-    if (!m_mw->isConnected() || m_matrix.isEmpty())
-    {
-        return;
-    }
-    if (!m_haveBackup)
-    {
-        QMessageBox::warning(this, tr("Write matrix"),
-                             tr("Please back up the current matrix before writing."));
-        return;
-    }
-    if (m_mw->device().setMatrix(0, m_matrix))
-    {
-        setStatus(tr("Matrix written to the keyboard."));
-    }
-    else
-    {
-        setStatus(tr("Write failed: %1").arg(m_mw->device().lastError()));
-    }
+    // Writing the key matrix has not been verified against hardware and an
+    // incorrect block can leave the keyboard needing a factory reset, so it is
+    // disabled.  Read/backup remain available for inspection.
+    QMessageBox::information(this, tr("Write matrix"),
+        tr("Writing the key matrix is disabled in this build for safety.\n\n"
+           "The block layout has not been verified on hardware yet, and an "
+           "incorrect write can require resetting the keyboard."));
 }
 
 static QString backupPath()
