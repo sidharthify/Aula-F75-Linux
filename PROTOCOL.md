@@ -113,9 +113,25 @@ effect. The application therefore re-sends the current frame every 50 ms.
 
 ## Unresolved
 
-- On-board effect payload (`0x8e`) — the driver sends it with the payload built
-  from its `LedOpt` table, but the exact field order has not been confirmed.
+- On-board effect payload — the driver stores lighting/effect configuration in a
+  128-byte "LED profile" block read with opcode `0x44` and written with opcode
+  `0x04` (the driver verifies an `A5 5A` magic near the end).  The block layout
+  (which bytes select the effect, brightness, speed and direction) has not been
+  decoded yet, so the application's Effects tab is not functional.  Use
+  `tools/f75cfg` to read/diff/write the block and help isolate the fields:
+
+      gcc -O2 -o f75cfg tools/f75cfg.c
+      ./f75cfg read  /dev/hidraw4
+      ./f75cfg diff  /dev/hidraw4     # change the on-board effect, then Enter
+      ./f75cfg write <256 hex chars>  # write a profile back
+
 - Macro record format (`0x03`) — the driver writes 0x200-byte records with a
   name and event list; not yet decoded.
 - Key matrix index ↔ LED index mapping — assumed 1:1 in `RemapPage` and marked
   experimental.
+
+## Tooling
+
+`tools/f75cfg.c` speaks opcodes `0x05`, `0x44` and `0x04` directly and is the
+intended way to finish the effect decode.
+
