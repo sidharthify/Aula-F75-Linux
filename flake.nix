@@ -22,5 +22,21 @@
       overlays.default = final: prev: {
         aula-f75 = final.callPackage ./nix/package.nix { src = self; };
       };
+
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          packages = with pkgs; [
+            cmake
+            ninja
+            gcc
+            pkg-config
+            qt6.qtbase
+          ];
+          shellHook = ''
+            echo "AULA F75 dev shell.  Build with:"
+            echo "  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build"
+          '';
+        };
+      });
     };
 }

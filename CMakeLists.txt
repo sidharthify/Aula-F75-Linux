@@ -35,6 +35,25 @@ target_include_directories(aula-f75 PRIVATE src)
 
 target_link_libraries(aula-f75 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
 
+# nixpkgs' Qt6 CMake files expect the Nix build environment to inject the
+# top-level Qt include directory (which the QtGui/QColor -> qcolor.h redirect
+# needs).  Add it explicitly so a plain "cmake -S . -B build" also works.
+get_target_property(_qt_core_includes Qt6::Core INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+if(NOT _qt_core_includes)
+    get_target_property(_qt_core_includes Qt6::Core INTERFACE_INCLUDE_DIRECTORIES)
+endif()
+set(_qt_top_includes "")
+foreach(_inc IN LISTS _qt_core_includes)
+    get_filename_component(_parent "${_inc}" DIRECTORY)
+    if(EXISTS "${_parent}/QtGui")
+        list(APPEND _qt_top_includes "${_parent}")
+    endif()
+endforeach()
+if(_qt_top_includes)
+    list(REMOVE_DUPLICATES _qt_top_includes)
+    target_include_directories(aula-f75 PRIVATE ${_qt_top_includes})
+endif()
+
 install(TARGETS aula-f75 RUNTIME DESTINATION bin)
 install(FILES resources/org.aula.F75.desktop DESTINATION share/applications)
 install(FILES resources/org.aula.F75.svg DESTINATION share/icons/hicolor/scalable/apps RENAME org.aula.F75.svg)
